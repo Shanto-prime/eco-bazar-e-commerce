@@ -45,8 +45,8 @@
         "productTitleSuffix": "   Ecobazar"
     },
     "topbar": {
-        "storeLocation": "Store Location: Lincoln-344, Illinois, Chicago, USA",
-        "cityShort": "Chicago, USA",
+        "storeLocation": "Store Location: Keranigonj, Dhaka, Bangladesh",
+        "cityShort": "Keranigonj, Dhaka",
         "login": "Log In",
         "signup": "Sign Up",
         "dashboard": "Dashboard",
@@ -325,7 +325,7 @@
         "subscribed": "Subscribed! We'll email tips to {email}."
     },
     "footer": {
-        "brandBlurb": "Morbi cursus porttitor enim lobortis molestie. Duis gravida turpis dui, eget bibendum magna congue nec.",
+        "brandBlurb": "Ecobazar is your one-stop shop for fresh organic groceries. From farm-fresh fruits and vegetables to quality meats, dairy, and everyday essentials — delivered straight to your door across Dhaka.",
         "copyright": "Ecobazar eCommerce © 2021. All Rights Reserved",
         "securePayment": "Secure Payment",
         "groupMyAccount": "My Account",

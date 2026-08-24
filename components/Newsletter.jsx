@@ -43,38 +43,35 @@ export default function Newsletter() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder={t("newsletter.placeholder")}
-                        className="flex-1 px-5 py-3 outline-none text-sm"
+                        className="flex-1 min-w-0 px-4 sm:px-5 py-3 outline-none text-sm text-black"
                         required
                     />
                     <button
                         type="submit"
-                        className="bg-eco-green text-white px-8 font-medium hover:bg-emerald-600"
+                        className="shrink-0 bg-eco-green text-white px-5 sm:px-8 py-3 font-medium hover:bg-emerald-600  whitespace-nowrap ease-in-out duration-300 transition-all"
                     >
                         {t("newsletter.subscribe")}
                     </button>
                 </form>
                 <div className="flex gap-2">
                     <a
-                        href="#"
-                        className="w-9 h-9 rounded-full bg-eco-green text-white grid place-items-center"
+                        href="https://www.facebook.com/Shanto.primee"
+                        target="_blank"
+                        className="w-9 h-9 ease-in-out duration-300 transition-all rounded-full bg-eco-green text-white grid place-items-center  hover:bg-emerald-600 hover:text-white"
                     >
                         <i className="fa-brands fa-facebook-f" />
                     </a>
                     <a
-                        href="#"
-                        className="w-9 h-9 rounded-full bg-gray-100 grid place-items-center hover:bg-eco-green hover:text-white"
+                        href="https://x.com/shanto_prime"
+                        target="_blank"
+                        className="w-9 h-9 ease-in-out duration-300 transition-all rounded-full bg-eco-green text-white grid place-items-center hover:bg-emerald-600 hover:text-white"
                     >
                         <i className="fa-brands fa-twitter" />
                     </a>
                     <a
-                        href="#"
-                        className="w-9 h-9 rounded-full bg-gray-100 grid place-items-center hover:bg-eco-green hover:text-white"
-                    >
-                        <i className="fa-brands fa-pinterest" />
-                    </a>
-                    <a
-                        href="#"
-                        className="w-9 h-9 rounded-full bg-gray-100 grid place-items-center hover:bg-eco-green hover:text-white"
+                        href="https://www.instagram.com/shanto_primee/"
+                        target="_blank"
+                        className="w-9 h-9 ease-in-out duration-300 transition-all rounded-full bg-eco-green text-white grid place-items-center hover:bg-emerald-600 hover:text-white"
                     >
                         <i className="fa-brands fa-instagram" />
                     </a>

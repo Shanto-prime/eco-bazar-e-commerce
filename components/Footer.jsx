@@ -76,14 +76,14 @@ export default async function Footer() {
                     <p className="text-sm mb-4">{t("footer.brandBlurb")}</p>
                     <div className="text-sm">
                         <a className="underline" href="tel:2195550114">
-                            (219) 555-0114
+                            +880 01798 697432
                         </a>
                         <span className="mx-2">{t("common.or")}</span>
                         <a
                             className="underline break-all"
                             href="mailto:Proxy@gmail.com"
                         >
-                            Proxy@gmail.com
+                            hello@shanto.dev
                         </a>
                     </div>
                 </div>
