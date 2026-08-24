@@ -399,6 +399,8 @@
         "emailPh": "you@example.com",
         "password": "Password",
         "passwordHint": "Password (min 8 characters)",
+        "showPassword": "Show password",
+        "hidePassword": "Hide password",
         "phoneOptional": "Phone (optional)",
         "phonePh": "+1 555 123 4567",
         "photoOptional": "Profile photo (optional)",
