@@ -32,6 +32,7 @@ export default function RegisterForm() {
     });
     const [file, setFile] = useState(null); // the picked image File (uploaded after sign-in)
     const [preview, setPreview] = useState(""); // object URL for the local preview
+    const [showPassword, setShowPassword] = useState(false);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState(null);
     const fileRef = useRef(null);
@@ -238,17 +239,34 @@ export default function RegisterForm() {
                         >
                             {t("auth.passwordHint")}
                         </label>
-                        <input
-                            id="password"
-                            type="password"
-                            minLength={8}
-                            required
-                            value={form.password}
-                            onChange={set("password")}
-                            autoComplete="new-password"
-                            className="eco-input"
-                            placeholder="••••••••"
-                        />
+                        <div className="relative">
+                            <input
+                                id="password"
+                                type={showPassword ? "text" : "password"}
+                                minLength={8}
+                                required
+                                value={form.password}
+                                onChange={set("password")}
+                                autoComplete="new-password"
+                                className="eco-input pr-11"
+                                placeholder="••••••••"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword((v) => !v)}
+                                aria-label={
+                                    showPassword
+                                        ? t("auth.hidePassword")
+                                        : t("auth.showPassword")
+                                }
+                                aria-pressed={showPassword}
+                                className="absolute inset-y-0 right-0 flex items-center justify-center w-11 text-gray-400 hover:text-eco-green"
+                            >
+                                <i
+                                    className={`fa-solid ${showPassword ? "fa-eye-slash" : "fa-eye"}`}
+                                />
+                            </button>
+                        </div>
                     </div>
                     <div>
                         <label

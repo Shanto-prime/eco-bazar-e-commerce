@@ -34,6 +34,7 @@ export default function LoginForm({ hasGoogle, hasFacebook }) {
 
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState(null);
 
@@ -166,17 +167,34 @@ export default function LoginForm({ hasGoogle, hasFacebook }) {
                                 {t("auth.forgotPassword")}
                             </Link>
                         </div>
-                        <input
-                            id="password"
-                            name="password"
-                            type="password"
-                            autoComplete="current-password"
-                            required
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="eco-input"
-                            placeholder="••••••••"
-                        />
+                        <div className="relative">
+                            <input
+                                id="password"
+                                name="password"
+                                type={showPassword ? "text" : "password"}
+                                autoComplete="current-password"
+                                required
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="eco-input pr-11"
+                                placeholder="••••••••"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword((v) => !v)}
+                                aria-label={
+                                    showPassword
+                                        ? t("auth.hidePassword")
+                                        : t("auth.showPassword")
+                                }
+                                aria-pressed={showPassword}
+                                className="absolute inset-y-0 right-0 flex items-center justify-center w-11 text-gray-400 hover:text-eco-green"
+                            >
+                                <i
+                                    className={`fa-solid ${showPassword ? "fa-eye-slash" : "fa-eye"}`}
+                                />
+                            </button>
+                        </div>
                     </div>
                     <button
                         type="submit"
