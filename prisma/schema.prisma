@@ -546,6 +546,25 @@ model Review {
 }
 
 // ---------------------------------------------------------------------------
+// Contact form messages   anyone (guest or signed-in) can submit the contact
+// form on /contact. Messages land here and appear in /dashboard/messages
+// (ADMIN only) as a simple inbox. `isRead` flips when an admin opens the row;
+// the sidebar shows the unread count as a badge.
+// ---------------------------------------------------------------------------
+model ContactMessage {
+  id        String   @id @default(cuid()) @map("_id")
+  name      String
+  email     String
+  subject   String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([isRead, createdAt])
+  @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------------
 // Audit log   every privileged write logs here.
 // Lets the admin see exactly who did what and when.
 // ---------------------------------------------------------------------------

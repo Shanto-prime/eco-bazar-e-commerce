@@ -15,20 +15,25 @@ export async function generateMetadata() {
 }
 
 export default async function DashboardLayout({ children }) {
-    // Defence-in-depth: middleware already redirects anonymous users, but if
+    // Defense-in-depth: middleware already redirects anonymous users, but if
     // someone disables it, requireAuth still catches the request.
     const user = await requireAuth();
 
     // Pending profile-change requests power the sidebar badge. Only the admin can
-    // action them, so only the admin pays for the query   everyone else skips it.
+    // action them, so only the admin pays for the query everyone else skips it.
     const counts = {};
     if (user.role === "ADMIN") {
-        const [pendingRequests, pendingApprovals] = await Promise.all([
-            prisma.profileChangeRequest.count({ where: { status: "PENDING" } }),
-            prisma.approvalRequest.count({ where: { status: "PENDING" } }),
-        ]);
+        const [pendingRequests, pendingApprovals, unreadMessages] =
+            await Promise.all([
+                prisma.profileChangeRequest.count({
+                    where: { status: "PENDING" },
+                }),
+                prisma.approvalRequest.count({ where: { status: "PENDING" } }),
+                prisma.contactMessage.count({ where: { isRead: false } }),
+            ]);
         counts.pendingRequests = pendingRequests;
         counts.pendingApprovals = pendingApprovals;
+        counts.unreadMessages = unreadMessages;
     }
 
     return (

@@ -104,6 +104,13 @@ const NAV_SECTIONS = [
                 min: "ADMIN",
             },
             {
+                href: "/dashboard/messages",
+                labelKey: "dashboard.messages",
+                icon: "fa-envelope",
+                min: "ADMIN",
+                badge: "unreadMessages",
+            },
+            {
                 href: "/dashboard/audit-log",
                 labelKey: "dashboard.auditLog",
                 icon: "fa-clipboard-list",

@@ -2,9 +2,10 @@
 
 // app/contact/page.js   Contact page with validated message form.
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Breadcrumb from "../../components/Breadcrumb";
 import { useCart } from "../../lib/CartContext";
+import { submitContactMessageAction } from "../../lib/contact-actions";
 import { useT } from "../../lib/i18n/LanguageProvider";
 
 export default function ContactPage() {
@@ -22,6 +23,7 @@ export default function ContactPage() {
         message: "",
     });
     const [errors, setErrors] = useState({});
+    const [pending, startTransition] = useTransition();
     const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
     const submit = (e) => {
@@ -38,8 +40,15 @@ export default function ContactPage() {
             showToast(t("contact.fixFields"), "error");
             return;
         }
-        showToast(t("contact.sent"));
-        setForm({ name: "", email: "", subject: "", message: "" });
+        startTransition(async () => {
+            const res = await submitContactMessageAction(form);
+            if (!res?.ok) {
+                showToast(t("contact.fixFields"), "error");
+                return;
+            }
+            showToast(t("contact.sent"));
+            setForm({ name: "", email: "", subject: "", message: "" });
+        });
     };
 
     return (
@@ -51,7 +60,7 @@ export default function ContactPage() {
                     {cards.map((c, i) => (
                         <div
                             key={i}
-                            className="border border-gray-200 rounded-md p-4 sm:p-6 flex items-start gap-3 sm:gap-4"
+                            className="border max-h-32 border-gray-200 rounded-md p-4 sm:p-6 flex items-center gap-3 sm:gap-4"
                         >
                             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-green-50 grid place-items-center text-eco-green shrink-0">
                                 <i className={`fa-solid ${c.icon}`} />
@@ -117,7 +126,7 @@ export default function ContactPage() {
                         <div className="sm:col-span-2">
                             <textarea
                                 className={`eco-input ${errors.message ? "border-red-500" : ""}`}
-                                rows={5}
+                                rows={4}
                                 value={form.message}
                                 onChange={set("message")}
                                 placeholder={t("contact.messagePlaceholder")}
@@ -130,9 +139,12 @@ export default function ContactPage() {
                         </div>
                         <button
                             type="submit"
-                            className="sm:col-span-2 md:col-span-1 px-8 py-3 rounded-full bg-eco-green text-white font-medium hover:bg-emerald-600 min-h-[44px]"
+                            disabled={pending}
+                            className="sm:col-span-2 md:col-span-1 px-8 py-3 rounded-full bg-eco-green text-white font-medium hover:bg-emerald-600 disabled:opacity-60 min-h-[44px]"
                         >
-                            {t("contact.sendMessage")}{" "}
+                            {pending
+                                ? t("contact.sending")
+                                : t("contact.sendMessage")}{" "}
                             <i className="fa-solid fa-arrow-right ml-1" />
                         </button>
                     </form>
