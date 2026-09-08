@@ -31,6 +31,7 @@ import {
 import LocalTime from "../../../components/LocalTime";
 import StatusSelect from "./_components/StatusSelect";
 import OrderDetails from "./_components/OrderDetails";
+import CustomerOrderHistory from "./_components/CustomerOrderHistory";
 
 // Flatten one order's history into the plain, serialisable shape OrderDetails
 // (a client component) expects   dates as ISO strings, actor pre-resolved.
@@ -92,6 +93,15 @@ export default async function DashboardOrders({ searchParams }) {
     // searchParams is a Promise in Next 15+. Anything not in the enum (including
     // the default "all") falls through to no status filter rather than erroring.
     const params = await searchParams;
+
+    // CUSTOMER gets the storefront-styled "Order History" page (own orders,
+    // real pagination, no status tabs/inline status editor) instead of the
+    // shared admin/mod table below. See _components/CustomerOrderHistory.jsx.
+    if (user.role === "CUSTOMER") {
+        const page = Number.parseInt(params?.page, 10) || 1;
+        return <CustomerOrderHistory user={user} page={page} />;
+    }
+
     const raw =
         typeof params?.status === "string" ? params.status.toUpperCase() : "";
     const active = ORDER_STATUSES.includes(raw) ? raw : null;
