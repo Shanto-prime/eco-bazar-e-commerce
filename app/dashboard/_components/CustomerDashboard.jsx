@@ -1,93 +1,149 @@
 // app/dashboard/_components/CustomerDashboard.jsx
-// Customer overview: profile snapshot, recent order list, wishlist link.
+// Customer account overview, matching the "My Account" storefront design:
+// a profile card, a billing-address card, and a recent-order-history table.
+// Rendered inside AccountShell (breadcrumb + Navigation sidebar) for
+// role === CUSTOMER   see app/dashboard/layout.js.
 //
-// Saved-address CRUD and the password-change UI now live in /dashboard/settings
-// (AddressBook.jsx / PasswordSettings.jsx). Still outstanding here: order
-// history filters.
+// Every value here is real data (no template placeholders): profile from
+// User, billing address from the customer's default (or most recent) saved
+// Address, and orders from Prisma. A brand-new account with no saved address
+// or no orders yet shows an honest empty state instead of fabricated rows.
 
 import Link from "next/link";
 import { prisma } from "../../../lib/prisma";
 import { formatMoney } from "../../../lib/money";
 import { getActiveCurrency } from "../../../lib/store-config";
 import { getT } from "../../../lib/i18n/server";
+import { STATUS_PILL, statusKey } from "../../../lib/order-status";
 
 export default async function CustomerDashboard({ user }) {
     const { t } = await getT();
     const cur = await getActiveCurrency();
-    // Lightweight order count   full history lives at /dashboard/orders.
-    const orderCount = await prisma.order.count({ where: { userId: user.id } });
 
-    // Most recent five orders (basic list   fuller table on /dashboard/orders).
-    const recent = await prisma.order.findMany({
-        where: { userId: user.id },
-        orderBy: { createdAt: "desc" },
-        take: 5,
-        select: {
-            id: true,
-            number: true,
-            total: true,
-            status: true,
-            createdAt: true,
-        },
-    });
+    const [profile, billingAddress, recent] = await Promise.all([
+        prisma.user.findUnique({
+            where: { id: user.id },
+            select: { name: true, email: true, phone: true, image: true },
+        }),
+        prisma.address.findFirst({
+            where: { userId: user.id },
+            orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
+        }),
+        prisma.order.findMany({
+            where: { userId: user.id },
+            orderBy: { createdAt: "desc" },
+            take: 6,
+            select: {
+                id: true,
+                number: true,
+                total: true,
+                status: true,
+                createdAt: true,
+                _count: { select: { items: true } },
+            },
+        }),
+    ]);
+
+    const displayName = profile?.name || user.name || user.email;
+    const initials = (displayName || "?")
+        .trim()
+        .split(/\s+/)
+        .map((w) => w[0])
+        .slice(0, 2)
+        .join("")
+        .toUpperCase();
 
     return (
         <div>
-            <header className="mb-6">
-                <h1 className="text-2xl sm:text-3xl font-bold">
-                    {t("dashboard.hi", { name: user.name || user.email })}
-                </h1>
-                <p className="text-sm text-gray-500 mt-1">
-                    {t("dashboard.accountOverview")}
-                </p>
-            </header>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-5 mb-8">
-                <Link
-                    href="/dashboard/orders"
-                    className="bg-white border border-gray-200 rounded-lg p-5 hover:shadow-md transition"
-                >
-                    <div className="text-xs uppercase tracking-wider text-gray-500">
-                        {t("dashboard.totalOrders")}
-                    </div>
-                    <div className="text-2xl font-bold mt-1">{orderCount}</div>
-                    <div className="text-xs text-eco-green mt-1">
-                        {t("dashboard.viewOrderHistory")}
-                    </div>
-                </Link>
-                <Link
-                    href="/wishlist"
-                    className="bg-white border border-gray-200 rounded-lg p-5 hover:shadow-md transition"
-                >
-                    <div className="text-xs uppercase tracking-wider text-gray-500">
-                        {t("dashboard.wishlist")}
-                    </div>
-                    <div className="text-2xl font-bold mt-1">
-                        <i className="fa-regular fa-heart text-red-400" />
-                    </div>
-                    <div className="text-xs text-eco-green mt-1">
-                        {t("dashboard.openWishlist")}
-                    </div>
-                </Link>
-                <div className="bg-white border border-gray-200 rounded-lg p-5">
-                    <div className="text-xs uppercase tracking-wider text-gray-500">
-                        {t("dashboard.profile")}
-                    </div>
-                    <div className="font-medium mt-1 truncate">
-                        {user.email}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                {/* Profile card */}
+                <div className="bg-white border border-gray-200 rounded-lg p-6 flex flex-col items-center text-center">
+                    <span className="inline-flex items-center justify-center w-24 h-24 rounded-full overflow-hidden bg-eco-green/10 ring-1 ring-eco-green/20 text-eco-green text-2xl font-semibold shrink-0">
+                        {profile?.image ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                                src={profile.image}
+                                alt=""
+                                className="w-full h-full object-cover"
+                                referrerPolicy="no-referrer"
+                            />
+                        ) : (
+                            initials
+                        )}
+                    </span>
+                    <p className="mt-4 font-semibold text-lg">{displayName}</p>
+                    <p className="text-sm text-gray-500">
                         {t("dashboard.customerAccount")}
-                    </div>
+                    </p>
+                    <Link
+                        href="/dashboard/settings#profile"
+                        className="mt-3 text-sm font-medium text-eco-green hover:underline"
+                    >
+                        {t("dashboard.editProfile")}
+                    </Link>
+                </div>
+
+                {/* Billing address card */}
+                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">
+                        {t("dashboard.billingAddress")}
+                    </p>
+                    {billingAddress ? (
+                        <>
+                            <p className="font-semibold">
+                                {billingAddress.firstName}{" "}
+                                {billingAddress.lastName}
+                            </p>
+                            <p className="text-sm text-gray-600 mt-1">
+                                {[
+                                    billingAddress.street,
+                                    billingAddress.thana,
+                                    billingAddress.city,
+                                    billingAddress.state,
+                                    billingAddress.zip,
+                                ]
+                                    .filter(Boolean)
+                                    .join(", ")}
+                            </p>
+                            <p className="text-sm text-gray-600 mt-2">
+                                {profile?.email || user.email}
+                            </p>
+                            {(billingAddress.phone || profile?.phone) && (
+                                <p className="text-sm text-gray-600">
+                                    {billingAddress.phone || profile?.phone}
+                                </p>
+                            )}
+                        </>
+                    ) : (
+                        <p className="text-sm text-gray-500">
+                            {t("dashboard.noBillingAddress")}
+                        </p>
+                    )}
+                    <Link
+                        href="/dashboard/settings#addresses"
+                        className="inline-block mt-3 text-sm font-medium text-eco-green hover:underline"
+                    >
+                        {t("dashboard.editAddress")}
+                    </Link>
                 </div>
             </div>
 
-            <section className="mb-8">
-                <h2 className="text-lg sm:text-xl font-bold mb-3">
-                    {t("dashboard.recentOrders")}
-                </h2>
+            {/* Recent order history */}
+            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                    <h2 className="text-lg font-bold">
+                        {t("dashboard.recentOrderHistory")}
+                    </h2>
+                    <Link
+                        href="/dashboard/orders"
+                        className="text-sm font-medium text-eco-green hover:underline"
+                    >
+                        {t("dashboard.viewAll")}
+                    </Link>
+                </div>
+
                 {recent.length === 0 ? (
-                    <div className="border border-dashed border-gray-300 rounded-lg p-8 text-center text-gray-500 bg-white">
+                    <div className="p-10 text-center text-gray-500">
                         {t("dashboard.noOrders")}{" "}
                         <Link href="/shop" className="text-eco-green underline">
                             {t("dashboard.browseShop")}
@@ -97,100 +153,123 @@ export default async function CustomerDashboard({ user }) {
                 ) : (
                     <>
                         {/* Desktop table */}
-                        <div className="hidden md:block bg-white border border-gray-200 rounded-lg overflow-x-auto">
+                        <div className="hidden md:block overflow-x-auto">
                             <table className="w-full text-sm">
                                 <thead className="bg-gray-50 text-xs uppercase tracking-wider text-gray-500">
                                     <tr>
-                                        <th className="text-left px-4 py-3">
-                                            {t("dashboard.orderNumber")}
+                                        <th className="text-left px-6 py-3">
+                                            {t("dashboard.orderIdCol")}
                                         </th>
-                                        <th className="text-left px-4 py-3">
-                                            {t("dashboard.status")}
-                                        </th>
-                                        <th className="text-left px-4 py-3">
-                                            {t("dashboard.totalCol")}
-                                        </th>
-                                        <th className="text-left px-4 py-3">
+                                        <th className="text-left px-6 py-3">
                                             {t("dashboard.date")}
                                         </th>
+                                        <th className="text-left px-6 py-3">
+                                            {t("dashboard.totalCol")}
+                                        </th>
+                                        <th className="text-left px-6 py-3">
+                                            {t("dashboard.status")}
+                                        </th>
+                                        <th className="px-6 py-3" />
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {recent.map((o) => (
-                                        <tr key={o.id} className="border-t">
-                                            <td className="px-4 py-3 font-medium">
+                                        <tr
+                                            key={o.id}
+                                            className="border-t border-gray-100"
+                                        >
+                                            <td className="px-6 py-4 font-medium">
                                                 {o.number}
                                             </td>
-                                            <td className="px-4 py-3">
-                                                <StatusPill status={o.status} />
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                {formatMoney(o.total, cur)}
-                                            </td>
-                                            <td className="px-4 py-3 text-gray-500">
+                                            <td className="px-6 py-4 text-gray-500">
                                                 {new Date(
                                                     o.createdAt,
-                                                ).toLocaleDateString()}
+                                                ).toLocaleDateString(
+                                                    "en-US",
+                                                    {
+                                                        day: "numeric",
+                                                        month: "short",
+                                                        year: "numeric",
+                                                    },
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 font-semibold">
+                                                {formatMoney(o.total, cur)}{" "}
+                                                <span className="font-normal text-gray-400">
+                                                    (
+                                                    {t(
+                                                        o._count.items === 1
+                                                            ? "dashboard.items_one"
+                                                            : "dashboard.items_other",
+                                                        {
+                                                            count: o._count
+                                                                .items,
+                                                        },
+                                                    )}
+                                                    )
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span
+                                                    className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${STATUS_PILL[o.status] || "bg-gray-100 text-gray-700"}`}
+                                                >
+                                                    {t(statusKey(o.status))}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <Link
+                                                    href={`/dashboard/orders/${o.id}`}
+                                                    className="text-eco-green font-medium hover:underline whitespace-nowrap"
+                                                >
+                                                    {t(
+                                                        "dashboard.viewDetailsLink",
+                                                    )}
+                                                </Link>
                                             </td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
                         </div>
+
                         {/* Mobile cards */}
-                        <div className="md:hidden space-y-3">
+                        <div className="md:hidden divide-y divide-gray-100">
                             {recent.map((o) => (
-                                <div
-                                    key={o.id}
-                                    className="bg-white border border-gray-200 rounded-lg p-4"
-                                >
-                                    <div className="flex justify-between items-start">
-                                        <div className="font-medium">
-                                            {o.number}
+                                <div key={o.id} className="p-4">
+                                    <div className="flex justify-between items-start gap-2">
+                                        <div className="min-w-0">
+                                            <div className="font-medium truncate">
+                                                {o.number}
+                                            </div>
+                                            <div className="text-xs text-gray-500 mt-0.5">
+                                                {new Date(
+                                                    o.createdAt,
+                                                ).toLocaleDateString()}
+                                            </div>
                                         </div>
-                                        <StatusPill status={o.status} />
+                                        <span
+                                            className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${STATUS_PILL[o.status] || "bg-gray-100 text-gray-700"}`}
+                                        >
+                                            {t(statusKey(o.status))}
+                                        </span>
                                     </div>
-                                    <div className="text-xs text-gray-500 mt-1">
-                                        {new Date(
-                                            o.createdAt,
-                                        ).toLocaleDateString()}
-                                    </div>
-                                    <div className="text-sm font-semibold mt-2">
-                                        {formatMoney(o.total, cur)}
+                                    <div className="flex items-center justify-between mt-2">
+                                        <div className="text-sm font-semibold">
+                                            {formatMoney(o.total, cur)}
+                                        </div>
+                                        <Link
+                                            href={`/dashboard/orders/${o.id}`}
+                                            className="text-sm text-eco-green font-medium hover:underline"
+                                        >
+                                            {t("dashboard.viewDetailsLink")}
+                                        </Link>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     </>
                 )}
-            </section>
-
-            <section>
-                <h2 className="text-lg sm:text-xl font-bold mb-3">
-                    {t("dashboard.savedAddresses")}
-                </h2>
-                <div className="border border-dashed border-gray-300 rounded-lg p-6 text-center text-gray-500 bg-white">
-                    {/* Saved addresses are managed in /dashboard/settings#addresses. */}
-                    {t("dashboard.noAddresses")}
-                </div>
-            </section>
+            </div>
         </div>
-    );
-}
-
-function StatusPill({ status }) {
-    const map = {
-        PENDING: "bg-amber-100  text-amber-700",
-        PAID: "bg-blue-100   text-blue-700",
-        SHIPPED: "bg-purple-100 text-purple-700",
-        DELIVERED: "bg-emerald-100 text-emerald-700",
-        CANCELLED: "bg-gray-200   text-gray-700",
-    };
-    return (
-        <span
-            className={`text-xs px-2 py-1 rounded-full ${map[status] || "bg-gray-100 text-gray-700"}`}
-        >
-            {status}
-        </span>
     );
 }
