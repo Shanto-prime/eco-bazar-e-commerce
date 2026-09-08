@@ -8,6 +8,7 @@ import { requireAuth } from "../../lib/auth-helpers";
 import { getT } from "../../lib/i18n/server";
 import { prisma } from "../../lib/prisma";
 import DashboardShell from "./_components/DashboardShell";
+import AccountShell from "./_components/AccountShell";
 
 export async function generateMetadata() {
     const { t } = await getT();
@@ -34,6 +35,14 @@ export default async function DashboardLayout({ children }) {
         counts.pendingRequests = pendingRequests;
         counts.pendingApprovals = pendingApprovals;
         counts.unreadMessages = unreadMessages;
+    }
+
+    // CUSTOMER gets the storefront-styled "My Account" chrome (breadcrumb +
+    // simple Navigation card); ADMIN/MODERATOR keep the full app-shell   their
+    // nav (products, users, approvals, audit log, …) doesn't fit the customer
+    // sidebar. See app/dashboard/_components/AccountShell.jsx.
+    if (user.role === "CUSTOMER") {
+        return <AccountShell user={user}>{children}</AccountShell>;
     }
 
     return (
