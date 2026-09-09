@@ -3,6 +3,7 @@
 // app/cart/page.js   Shopping cart. Fully wired to CartContext.
 // Responsive: desktop shows a table; mobile shows stacked cards.
 
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import Breadcrumb from "../../components/Breadcrumb";
@@ -10,6 +11,38 @@ import QuantityStepper from "../../components/QuantityStepper";
 import { useCart } from "../../lib/CartContext";
 import { useT } from "../../lib/i18n/LanguageProvider";
 import { useMoney } from "../../lib/currency/CurrencyProvider";
+
+// Product thumbnail: a real photo when the item carries one, else its emoji
+// icon, else a placeholder glyph. Used by both the desktop table and the
+// mobile card stack below.
+function Thumb({ item, className }) {
+    if (item.image) {
+        return (
+            <div
+                className={`relative shrink-0 rounded-md border border-gray-200 bg-gray-50 overflow-hidden ${className}`}
+            >
+                <Image
+                    src={item.image}
+                    alt={item.name}
+                    fill
+                    className="object-contain p-1.5"
+                    sizes="64px"
+                />
+            </div>
+        );
+    }
+    return (
+        <div
+            className={`shrink-0 rounded-md border border-gray-200 bg-gray-50 grid place-items-center text-gray-300 ${className}`}
+        >
+            {item.icon ? (
+                <span className="text-2xl">{item.icon}</span>
+            ) : (
+                <i className="fa-regular fa-image" />
+            )}
+        </div>
+    );
+}
 
 export default function CartPage() {
     const t = useT();
@@ -86,12 +119,10 @@ export default function CartPage() {
                                 {items.map((it) => (
                                     <tr key={it.slug} className="border-t">
                                         <td className="py-4 px-4 flex items-center gap-3">
-                                            <span className="text-3xl">
-                                                {it.icon}
-                                            </span>
+                                            <Thumb item={it} className="w-14 h-14" />
                                             <Link
                                                 href={`/shop/${it.slug}`}
-                                                className="hover:text-eco-green"
+                                                className="hover:text-eco-green font-medium"
                                             >
                                                 {it.name}
                                             </Link>
@@ -136,9 +167,10 @@ export default function CartPage() {
                                     key={it.slug}
                                     className="border border-gray-200 rounded-lg p-4 flex gap-4"
                                 >
-                                    <div className="text-4xl shrink-0 self-center">
-                                        {it.icon}
-                                    </div>
+                                    <Thumb
+                                        item={it}
+                                        className="w-14 h-14 self-center"
+                                    />
                                     <div className="flex-1 min-w-0">
                                         <div className="flex justify-between items-start gap-2">
                                             <Link
@@ -182,7 +214,7 @@ export default function CartPage() {
                         <div className="flex flex-wrap gap-3 justify-between mt-6">
                             <Link
                                 href="/shop"
-                                className="px-5 py-3 border rounded-full text-sm hover:border-eco-green hover:text-eco-green"
+                                className="px-5 py-3 rounded-full bg-gray-100 text-sm font-medium hover:bg-gray-200"
                             >
                                 <i className="fa-solid fa-arrow-left mr-1" />{" "}
                                 {t("cart.returnToShop")}
@@ -193,7 +225,7 @@ export default function CartPage() {
                                     if (confirm(t("cart.confirmClear")))
                                         clearCart();
                                 }}
-                                className="px-5 py-3 border rounded-full text-sm hover:border-red-500 hover:text-red-500"
+                                className="px-5 py-3 rounded-full bg-gray-100 text-sm font-medium hover:bg-red-50 hover:text-red-500"
                             >
                                 {t("cart.clearCart")}
                             </button>

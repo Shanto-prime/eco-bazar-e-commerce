@@ -9,6 +9,7 @@
 // the fields stay fully editable, and placeOrderAction still validates whatever
 // is actually submitted. Guests get an empty object.
 
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -80,6 +81,12 @@ export default function CheckoutClient({ initialBilling = {} }) {
     const [errors, setErrors] = useState({});
     const [placed, setPlaced] = useState(null);
     const [placing, setPlacing] = useState(false);
+    // "Ship to a different address"   a free-text shipping note appended to the
+    // order's notes field. There is no separate shipping-address column on
+    // Order, so this is deliberately a note rather than a second cascading
+    // Division/District/Thana form.
+    const [shipDifferent, setShipDifferent] = useState(false);
+    const [shippingNote, setShippingNote] = useState("");
 
     const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
@@ -121,6 +128,17 @@ export default function CheckoutClient({ initialBilling = {} }) {
 
         setPlacing(true);
         const itemCount = items.length;
+        // A different shipping address is captured as a note (Order has no second
+        // address   see the state declarations above), prefixed so it reads clearly
+        // alongside any notes the buyer already typed.
+        const notes = [
+            shipDifferent && shippingNote.trim()
+                ? `${t("checkout.shipDifferent")}: ${shippingNote.trim()}`
+                : null,
+            form.notes || null,
+        ]
+            .filter(Boolean)
+            .join("\n\n");
         try {
             // The server action recomputes prices + stock from the DB (anti-tampering)
             // and decrements inventory inside a transaction.
@@ -136,7 +154,7 @@ export default function CheckoutClient({ initialBilling = {} }) {
                     zip: form.zip || undefined,
                     email: form.email,
                     phone: form.phone,
-                    notes: form.notes || undefined,
+                    notes: notes || undefined,
                     payment: PAYMENT_MAP[form.payment] || "COD",
                 },
                 items: items.map((i) => ({ slug: i.slug, qty: i.qty })),
@@ -259,7 +277,7 @@ export default function CheckoutClient({ initialBilling = {} }) {
                         <h2 className="text-lg sm:text-xl font-bold mb-4">
                             {t("checkout.billingInfo")}
                         </h2>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             <Field
                                 label={`${t("checkout.firstName")} *`}
                                 err={errors.firstName}
@@ -284,7 +302,7 @@ export default function CheckoutClient({ initialBilling = {} }) {
                                     onChange={set("lastName")}
                                 />
                             </Field>
-                            <Field label={t("checkout.company")} wide>
+                            <Field label={t("checkout.company")}>
                                 <input
                                     name="company"
                                     autoComplete="organization"
@@ -405,18 +423,8 @@ export default function CheckoutClient({ initialBilling = {} }) {
                                     placeholder={t("checkout.emailPlaceholder")}
                                 />
                             </Field>
-                            <Field label={`${t("checkout.country")}`}>
-                                <input
-                                    name="country"
-                                    className="eco-input bg-gray-50 text-gray-500"
-                                    value={COUNTRY}
-                                    readOnly
-                                    aria-readonly="true"
-                                />
-                            </Field>
                             <Field
                                 label={`${t("checkout.phone")} *`}
-                                wide
                                 err={errors.phone}
                             >
                                 <input
@@ -429,7 +437,46 @@ export default function CheckoutClient({ initialBilling = {} }) {
                                     placeholder="01XXXXXXXXX"
                                 />
                             </Field>
+                            <Field label={`${t("checkout.country")}`} wide>
+                                <input
+                                    name="country"
+                                    className="eco-input bg-gray-50 text-gray-500"
+                                    value={COUNTRY}
+                                    readOnly
+                                    aria-readonly="true"
+                                />
+                            </Field>
                         </div>
+
+                        <label className="flex items-center gap-2 mt-4 text-sm cursor-pointer">
+                            <input
+                                type="checkbox"
+                                className="eco-check"
+                                checked={shipDifferent}
+                                onChange={(e) =>
+                                    setShipDifferent(e.target.checked)
+                                }
+                            />
+                            {t("checkout.shipDifferent")}
+                        </label>
+                        {shipDifferent && (
+                            <div className="mt-3">
+                                <label className="text-xs text-gray-500">
+                                    {t("checkout.shipDifferentDetails")}
+                                </label>
+                                <textarea
+                                    className="eco-input"
+                                    rows={3}
+                                    value={shippingNote}
+                                    onChange={(e) =>
+                                        setShippingNote(e.target.value)
+                                    }
+                                    placeholder={t(
+                                        "checkout.shipDifferentPh",
+                                    )}
+                                />
+                            </div>
+                        )}
                     </div>
 
                     <div>
@@ -460,7 +507,7 @@ export default function CheckoutClient({ initialBilling = {} }) {
                                 className="flex justify-between text-sm py-2"
                             >
                                 <div className="flex items-center gap-2 flex-1 truncate">
-                                    <span className="text-xl">{it.icon}</span>{" "}
+                                    <Thumb item={it} />
                                     <span className="truncate">
                                         {it.name} ×{it.qty}
                                     </span>
@@ -547,9 +594,31 @@ export default function CheckoutClient({ initialBilling = {} }) {
     );
 }
 
+// Same real-photo → emoji-icon → placeholder fallback as the Cart table.
+function Thumb({ item }) {
+    if (item.image) {
+        return (
+            <div className="relative w-9 h-9 shrink-0 rounded-md border border-gray-200 bg-gray-50 overflow-hidden">
+                <Image
+                    src={item.image}
+                    alt={item.name}
+                    fill
+                    className="object-contain p-1"
+                    sizes="36px"
+                />
+            </div>
+        );
+    }
+    return (
+        <span className="w-9 h-9 shrink-0 rounded-md border border-gray-200 bg-gray-50 grid place-items-center text-lg text-gray-300">
+            {item.icon || <i className="fa-regular fa-image text-sm" />}
+        </span>
+    );
+}
+
 function Field({ label, err, wide, children }) {
     return (
-        <div className={wide ? "sm:col-span-2" : ""}>
+        <div className={wide ? "sm:col-span-2 lg:col-span-3" : ""}>
             <label className="text-xs text-gray-500">{label}</label>
             {children}
             {err && <div className="text-xs text-red-500 mt-1">{err}</div>}
