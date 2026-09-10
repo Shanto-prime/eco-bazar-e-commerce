@@ -151,7 +151,7 @@ model Cart {
   id        String   @id @default(cuid()) @map("_id")
   userId    String   @unique
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items     Json     // [{ slug, name, icon, price, qty }]
+  items     Json     // [{ slug, name, icon, image, price, qty }]
   coupon    Json?    // { code, type, value, label } | null
   wishlist  Json?    // [slug, slug, ...]   per-user saved items (signed-in only)
   createdAt DateTime @default(now())
