@@ -27,7 +27,7 @@ const COUPONS = {
 
 // ---------- Reducer -----------------------------------------------------------
 const initialState = {
-    items: [], // [{ slug, name, icon, price, qty }]
+    items: [], // [{ slug, name, icon, image, price, qty }]
     wishlist: [], // [slug, slug, ...]
     coupon: null, // { code, type, value, label } | null
 };
@@ -50,6 +50,7 @@ function reducer(state, action) {
                           slug: product.slug,
                           name: product.name,
                           icon: product.icon,
+                          image: product.image ?? null,
                           price: product.price,
                           qty,
                       },
@@ -84,9 +85,18 @@ function reducer(state, action) {
                     items.push(it);
                     continue;
                 }
-                if (f.price !== it.price || f.name !== it.name) {
+                if (
+                    f.price !== it.price ||
+                    f.name !== it.name ||
+                    f.image !== it.image
+                ) {
                     changed = true;
-                    items.push({ ...it, price: f.price, name: f.name });
+                    items.push({
+                        ...it,
+                        price: f.price,
+                        name: f.name,
+                        image: f.image,
+                    });
                 } else {
                     items.push(it);
                 }

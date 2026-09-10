@@ -233,7 +233,7 @@
         "browseProducts": "Browse products",
         "savedItems_one": "{count} saved item",
         "savedItems_other": "{count} saved items",
-        "moveToCart": "Move to Cart",
+        "stockStatus": "Stock Status",
         "remove": "Remove {name} from wishlist"
     },
     "checkout": {
@@ -258,6 +258,9 @@
         "email": "Email",
         "phone": "Phone",
         "select": "Select",
+        "shipDifferent": "Ship to a different address",
+        "shipDifferentDetails": "Shipping address details",
+        "shipDifferentPh": "Recipient name, address, and phone for delivery",
         "additionalInfo": "Additional Info",
         "orderNotes": "Order Notes (Optional)",
         "orderNotesPh": "Notes about your order, e.g. special notes for delivery",
